@@ -25,6 +25,8 @@ class OAuthForm(BaseForm):
     access_token_url = StringField("Access token url", validators=[InputRequired()])
     authorize_url = StringField("Authorization url", validators=[InputRequired()])
     api_base_url = StringField("User info url", validators=[InputRequired()])
+    scopes = StringField("Scopes", validators=[InputRequired()])
+    username_attribute = StringField("Username Attribute", validators=[InputRequired()])
     submit = SubmitField("Add")
 
 
@@ -59,6 +61,9 @@ def load_bp(oauth):
             access_token_url = request.form["access_token_url"]
             authorize_url = request.form["authorize_url"]
             api_base_url = request.form["api_base_url"]
+            scopes = request.form["scopes"]
+            username_attribute = request.form["username_attribute"]
+
 
             client = OAuthClients(
                 name=name,
@@ -66,7 +71,9 @@ def load_bp(oauth):
                 client_secret=client_secret,
                 access_token_url=access_token_url,
                 authorize_url=authorize_url,
-                api_base_url=api_base_url
+                api_base_url=api_base_url,
+                scopes=scopes,
+                username_attribute=username_attribute
             )
             db.session.add(client)
             db.session.commit()
@@ -93,8 +100,10 @@ def load_bp(oauth):
         client.authorize_access_token()
         api_data = client.get('').json()
 
-        user_name = api_data["preferred_username"]
-        user_email = api_data["email"]
+        oauth_client = OAuthClients.query.filter_by(id=client_id).first()
+
+        user_name = api_data.get[oauth_client.username_attribute]
+        user_email = api_data.get("email")
         user_roles = api_data.get("roles")
 
         user = Users.query.filter_by(email=user_email).first()
